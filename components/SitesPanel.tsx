@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { CodeBlock } from "@/components/ui/code-block";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/stateful-button";
+import { Plus, Trash2 } from "lucide-react";
 import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type Site = {
@@ -78,21 +82,23 @@ export default function SitesPanel() {
     <section className="space-y-6">
       <h2 className="text-xl font-semibold">Your Sites</h2>
 
-      <form onSubmit={onCreate} className="flex flex-col gap-3 sm:flex-row">
-        <input
+      <form onSubmit={onCreate} className="flex flex-col gap-3 sm:flex-row items-center">
+        <Input
           type="text"
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
           placeholder="example.com"
-          className="w-full rounded-md border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900"
           required
+          className="h-9"
         />
         <button
           type="submit"
           disabled={creating}
-          className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white disabled:opacity-50"
+          className="ml-2 flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white/80 text-blue-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 hover:ring-2 hover:ring-blue-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+          aria-label="Add site"
+          title="Add site"
         >
-          {creating ? 'Adding…' : 'Add Domain'}
+          <Plus size={20} className="text-blue-600" />
         </button>
       </form>
 
@@ -105,7 +111,7 @@ export default function SitesPanel() {
       ) : (
         <div className="space-y-6">
           {sites.map((site) => (
-            <SiteCard key={site.id} site={site} />
+            <SiteCard key={site.id} site={site} onRemove={(id) => setSites((prev) => prev.filter((s) => s.id !== id))} />
           ))}
         </div>
       )}
@@ -121,13 +127,35 @@ function EmptyState() {
   );
 }
 
-function SiteCard({ site }: { site: Site }) {
+function SiteCard({ site, onRemove }: { site: Site, onRemove: (id: string) => void }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const scriptSnippet = `<script defer src="${origin}/tracker.js" data-site-id="${site.site_id}"></script>`;
-  const npmSnippet = `npm i @minilytics/tracker  # (placeholder package)
+  const scriptSnippet = `<script defer src=\"${origin}/tracker.js\" data-site-id=\"${site.site_id}\"></script>`;
 
-import { init } from '@minilytics/tracker';
-init({ endpoint: '${origin}/api/track', siteId: '${site.site_id}' });`;
+  const npmInstall = `npm install @fernando546/tracker@beta`;
+  const npmSnippet = `import { MinilyticsTracker } from '@fernando546/tracker';
+MinilyticsTracker.init({ endpoint: '${origin}/api/track', siteId: '${site.site_id}' });`;
+
+  const [removing, setRemoving] = useState(false);
+  const handleRemove = async () => {
+    if (!confirm('Remove this site?')) return;
+    setRemoving(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+      const res = await fetch(`/api/sites/${site.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to remove site');
+      onRemove(site.id);
+    } catch (e) {
+      alert('Failed to remove site');
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   return (
     <div className="rounded-lg border p-4 dark:border-gray-700">
@@ -136,31 +164,41 @@ init({ endpoint: '${origin}/api/track', siteId: '${site.site_id}' });`;
           <h3 className="text-lg font-semibold">{site.domain}</h3>
           <p className="text-sm text-gray-500">Site ID: <code>{site.site_id}</code></p>
         </div>
+        <button
+          type="button"
+          className="ml-4 flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white/80 text-red-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 hover:ring-2 hover:ring-red-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+          disabled={removing}
+          onClick={handleRemove}
+          aria-label="Remove site"
+          title="Remove site"
+        >
+          <Trash2 size={18} className="text-red-600" />
+        </button>
       </div>
-
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <h4 className="mb-2 font-medium">Copy-paste script</h4>
-          <CodeBlock code={scriptSnippet} language="html" label="index.html" />
+          <CodeBlock
+            language="html"
+            filename="index.html"
+            code={scriptSnippet}
+          />
         </div>
         <div>
-          <h4 className="mb-2 font-medium">NPM (placeholder)</h4>
-          <CodeBlock code={npmSnippet} language="ts" label="app.ts" />
+          <h4 className="mb-2 font-medium">NPM (React/JS/TS)</h4>
+          <CodeBlock
+            language="bash"
+            filename="Terminal"
+            code={npmInstall}
+          />
+          <div className="h-2" />
+          <CodeBlock
+            language="typescript"
+            filename="app.ts"
+            code={npmSnippet}
+          />
         </div>
       </div>
-    </div>
-  );
-}
-
-function CodeBlock({ code, language, label }: { code: string; language: string; label: string }) {
-  return (
-    <div className="rounded-md bg-gray-900 p-4 text-sm text-gray-200">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="text-xs text-gray-400">{label}</span>
-      </div>
-      <pre className="overflow-x-auto">
-        <code>{code}</code>
-      </pre>
     </div>
   );
 }
