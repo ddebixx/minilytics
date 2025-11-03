@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import AuthModal from '@/components/AuthModal';
+import { AuroraText } from "@/components/ui/aurora-text"
+import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/ui/terminal"
 
 export default function Home() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -45,7 +47,12 @@ export default function Home() {
             </div>
 
             <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl">
-              Understand Your Visitors
+              <AuroraText 
+                className="block"
+                colors={["#3b82f6", "#8b5cf6", "#06b6d4", "#6366f1"]}
+              >
+                Understand Your Visitors
+              </AuroraText>
               <br />
               <span className="bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Without Invading Privacy
@@ -133,25 +140,53 @@ export default function Home() {
             />
           </div>
 
-          {/* Code Example */}
+          {/* Installation Examples */}
           <div className="mt-24">
             <h2 className="mb-8 text-center text-3xl font-bold text-gray-900 dark:text-white">
               Get started in seconds
             </h2>
-            <div className="mx-auto max-w-2xl rounded-lg bg-gray-900 p-6 shadow-2xl">
-              <div className="mb-3 flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                <span className="ml-auto text-xs text-gray-400">index.html</span>
-              </div>
-              <pre className="overflow-x-auto text-sm text-gray-300">
-                <code>{`<script
-  defer
-  src="https://minilytics.app/tracker.js"
-  data-site-id="YOUR_SITE_ID"
-></script>`}</code>
-              </pre>
+            <div className="mx-auto flex max-w-4xl flex-col gap-6 md:flex-row">
+              {/* NPM Installation */}
+              <Terminal className="flex-1">
+                <TypingAnimation delay={0} className="text-gray-300">
+                  $ npm install @minilytics/tracker
+                </TypingAnimation>
+                
+                <AnimatedSpan className="text-gray-500">
+                  + @minilytics/tracker@1.0.0
+                </AnimatedSpan>
+                
+                <AnimatedSpan className="text-gray-500">
+                  added 1 package in 2s
+                </AnimatedSpan>
+                
+                <AnimatedSpan className="text-green-400">
+                  ✓ Ready to track!
+                </AnimatedSpan>
+              </Terminal>
+
+              {/* Script Tag */}
+              <Terminal className="flex-1">
+                <TypingAnimation delay={0} className="text-gray-300">
+                  &lt;script
+                </TypingAnimation>
+                
+                <AnimatedSpan className="text-gray-300 pl-4">
+                  defer
+                </AnimatedSpan>
+                
+                <AnimatedSpan className="text-gray-300 pl-4">
+                  src=&quot;https://minilytics.app/tracker.js&quot;
+                </AnimatedSpan>
+                
+                <AnimatedSpan className="text-gray-300 pl-4">
+                  data-site-id=&quot;YOUR_SITE_ID&quot;
+                </AnimatedSpan>
+                
+                <AnimatedSpan className="text-gray-300">
+                  &gt;&lt;/script&gt;
+                </AnimatedSpan>
+              </Terminal>
             </div>
           </div>
         </main>
