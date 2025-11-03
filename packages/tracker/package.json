@@ -26,7 +26,7 @@
     "version:beta": "npm version prerelease --preid=beta",
     "publish:npm:beta": "npm publish --access public --tag beta",
     "publish:npm": "npm publish --access public",
-    "publish:gh": "npm publish --registry=https://npm.pkg.github.com"
+    "publish:gh": "npm publish --registry=https://npm.pkg.github.com --tag beta"
   },
   "keywords": [
     "analytics",
