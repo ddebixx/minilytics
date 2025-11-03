@@ -3,19 +3,20 @@ export const runtime = "nodejs"; // ensure Node runtime for server-side SDKs
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
-const ALLOWED_ORIGIN = "*"; // MVP: allow all; tighten later per site/domain
-
-function corsHeaders() {
+function corsHeaders(origin?: string | null) {
+  // Allow specific origin or all origins for tracking (more permissive for analytics)
+  const allowOrigin = origin || '*';
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
   } as const;
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get('origin');
+  return new Response(null, { status: 204, headers: corsHeaders(origin) });
 }
 
 type Payload = {
@@ -26,13 +27,14 @@ type Payload = {
 };
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get('origin');
   let body: Payload | null = null;
   try {
     body = await req.json();
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
     });
   }
 
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!domain || !path) {
     return new Response(JSON.stringify({ error: "Missing domain or path" }), {
       status: 422,
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
     });
   }
 
@@ -65,12 +67,12 @@ export async function POST(req: NextRequest) {
     // env missing or other setup error
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
     });
   }
 
   return new Response(JSON.stringify({ status: "ok" }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders() },
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
   });
 }

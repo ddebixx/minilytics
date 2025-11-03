@@ -53,10 +53,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (signInError) throw signInError;
 
         if (data?.session) {
+          console.log('Login successful, session:', data.session.access_token.substring(0, 20) + '...');
           setSuccess('Logged in successfully! Redirecting...');
+          
+          // Wait a bit longer for cookies to be set
           setTimeout(() => {
+            console.log('Redirecting to dashboard...');
             window.location.href = '/dashboard';
-          }, 1000);
+          }, 1500);
+        } else {
+          throw new Error('No session created');
         }
       }
     } catch (err: any) {

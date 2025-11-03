@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 // Browser-side client using anon key for auth (lazy initialization)
 let browserClient: SupabaseClient | null = null;
@@ -15,12 +16,8 @@ export function getSupabaseClient() {
     );
   }
 
-  browserClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
+  // Use SSR browser client for proper cookie handling
+  browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   return browserClient;
 }

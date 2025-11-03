@@ -1,4 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import SitesPanel from "@/components/SitesPanel";
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic"; // always fetch fresh (MVP)
 
@@ -11,14 +14,48 @@ type PageView = {
   site_id: string | null;
 };
 
-async function fetchPageViews(): Promise<PageView[]> {
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    console.log('Dashboard auth check:', { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      error: error?.message 
+    });
+    
+    if (error || !user) return null;
+    return user.id;
+  } catch (e) {
+    console.error('Auth check failed:', e);
+    return null;
+  }
+}
+
+async function fetchPageViews(userId: string): Promise<PageView[]> {
   try {
     const supabase = getAdminClient();
+    
+    // First get user's site_ids
+    const { data: sites, error: sitesError } = await supabase
+      .from("sites")
+      .select("site_id")
+      .eq("user_id", userId);
+    
+    if (sitesError) throw sitesError;
+    if (!sites || sites.length === 0) return [];
+    
+    const siteIds = sites.map(s => s.site_id);
+    
+    // Then fetch page views for those sites
     const { data, error } = await supabase
       .from("page_views")
       .select("id, created_at, domain, path, referrer, site_id")
+      .in("site_id", siteIds)
       .order("created_at", { ascending: false })
       .limit(100);
+      
     if (error) throw error;
     return data as PageView[];
   } catch (e) {
@@ -28,10 +65,18 @@ async function fetchPageViews(): Promise<PageView[]> {
 }
 
 export default async function DashboardPage() {
-  const views = await fetchPageViews();
+  const userId = await getCurrentUserId();
+  
+  if (!userId) {
+    redirect('/');
+  }
+  
+  const views = await fetchPageViews(userId);
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold mb-4">Page Views (latest 100)</h1>
+    <div className="p-8 space-y-10">
+      <SitesPanel />
+
+      <h1 className="text-2xl font-semibold">Page Views (latest 100)</h1>
       <div className="overflow-auto border rounded">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">

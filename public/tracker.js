@@ -7,6 +7,7 @@
   try {
     // Respect Do Not Track
     if (navigator.doNotTrack === '1' || window.doNotTrack === '1') {
+      console.log('⚠️ Minilytics: DNT enabled, not tracking');
       return;
     }
 
@@ -32,22 +33,28 @@
       site_id: siteId || null,
     };
 
-    var url = apiOrigin + '/api/track';
-    var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    console.log('📊 Minilytics tracking:', payload);
+    console.log('📡 Sending to:', apiOrigin + '/api/track');
 
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(url, blob);
-    } else {
-      // Fallback
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-        mode: 'cors',
-      }).catch(function () {});
-    }
+    var url = apiOrigin + '/api/track';
+
+    // Use fetch instead of sendBeacon to avoid credentials issues
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+      mode: 'cors',
+      credentials: 'omit', // Don't send cookies/credentials
+    }).then(function(res) {
+      console.log('✅ Fetch response:', res.status, res.statusText);
+      return res.json();
+    }).then(function(data) {
+      console.log('✅ Response data:', data);
+    }).catch(function(err) {
+      console.error('❌ Tracking error:', err);
+    });
   } catch (e) {
-    // swallow
+    console.error('❌ Minilytics error:', e);
   }
 })();

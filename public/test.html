@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Page - Minilytics</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .info {
+      background: #f0f9ff;
+      border-left: 4px solid #0284c7;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Minilytics Test Page</h1>
+  
+  <div class="info">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Go to <code>http://localhost:3000/dashboard</code></li>
+      <li>Add your domain (e.g., "localhost" or "test.local")</li>
+      <li>Copy the generated <code>site_id</code></li>
+      <li>Replace <code>YOUR_SITE_ID</code> below with your actual site ID</li>
+      <li>Open this HTML file in your browser</li>
+      <li>Check your dashboard - you should see a new page view!</li>
+    </ol>
+  </div>
+
+  <h2>How to use this test page:</h2>
+  
+  <h3>Option 1: Direct file open (file://)</h3>
+  <p>Just double-click this HTML file to open it in your browser. The tracker will still work!</p>
+
+  <h3>Option 2: Local HTTP server (http://localhost)</h3>
+  <p>If you want to test from <code>http://</code> instead of <code>file://</code>:</p>
+  <pre><code># Python 3
+python -m http.server 8080
+
+# Node.js (install http-server globally first)
+npx http-server -p 8080</code></pre>
+  <p>Then visit: <code>http://localhost:8080/test.html</code></p>
+
+  <hr>
+
+  <h2>✅ Page loaded successfully!</h2>
+  <p>If the tracking script is configured correctly, this page view was just recorded.</p>
+  <p>Current page: <code id="current-url"></code></p>
+  <p>Referrer: <code id="referrer-url"></code></p>
+
+  <script>
+    document.getElementById('current-url').textContent = window.location.href;
+    document.getElementById('referrer-url').textContent = document.referrer || '(none)';
+    
+    // Debug: Log when tracker script loads
+    console.log('🎯 Minilytics test page loaded');
+    console.log('Page URL:', window.location.href);
+    console.log('Tracker should send to: http://localhost:3001/api/track');
+  </script>
+
+  <script defer src="http://localhost:3001/tracker.js" data-site-id="099050a7-e518-4ef6-92b6-9e18627efac8"></script>
+  
+  <script>
+    // Debug: Listen for script load
+    window.addEventListener('load', function() {
+      console.log('✅ All scripts loaded');
+      setTimeout(function() {
+        console.log('⏱️ Check Network tab in DevTools for request to /api/track');
+      }, 500);
+    });
+  </script>
+
+</body>
+</html>
