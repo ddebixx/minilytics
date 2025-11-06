@@ -149,15 +149,19 @@ export default function Home() {
               {/* NPM Installation */}
               <Terminal className="flex-1">
                 <TypingAnimation delay={0} className="text-gray-300">
-                  $ npm install @minilytics/tracker
+                  $ npm install @fernando546/tracker
                 </TypingAnimation>
                 
                 <AnimatedSpan className="text-gray-300">
-                  + @minilytics/tracker@1.0.0
+                  + @fernando546/tracker@beta
                 </AnimatedSpan>
 
                 <AnimatedSpan className="text-gray-300">
                   added 1 package in 2s
+                </AnimatedSpan>
+
+                <AnimatedSpan className="text-green-400">
+                  ✓ Package installed!
                 </AnimatedSpan>
 
                 <AnimatedSpan className="text-green-400">
