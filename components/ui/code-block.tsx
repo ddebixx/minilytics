@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { oneLight, oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
 
 type CodeBlockProps = {
@@ -33,6 +33,25 @@ export const CodeBlock = ({
 }: CodeBlockProps) => {
   const [copied, setCopied] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState(0);
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if dark mode is active
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const tabsExist = tabs.length > 0;
 
@@ -87,7 +106,7 @@ export const CodeBlock = ({
       </div>
       <SyntaxHighlighter
         language={activeLanguage}
-        style={oneLight}
+        style={isDark ? oneDark : oneLight}
         customStyle={{
           margin: 0,
           padding: 0,
@@ -99,7 +118,7 @@ export const CodeBlock = ({
         lineProps={(lineNumber) => ({
           style: {
             backgroundColor: activeHighlightLines.includes(lineNumber)
-              ? "rgba(59,130,246,0.1)"
+              ? isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.1)"
               : "transparent",
             display: "block",
             width: "100%",

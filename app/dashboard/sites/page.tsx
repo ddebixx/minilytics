@@ -28,8 +28,8 @@ export default async function SitesPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sites</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Sites</h1>
+        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
           Manage your websites and get integration code
         </p>
       </div>

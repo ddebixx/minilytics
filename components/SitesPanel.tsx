@@ -94,7 +94,7 @@ export default function SitesPanel() {
         <button
           type="submit"
           disabled={creating}
-          className="ml-2 flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white/80 text-blue-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 hover:ring-2 hover:ring-blue-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+          className="ml-2 flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 bg-white/80 text-blue-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 hover:ring-2 hover:ring-blue-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
           aria-label="Add site"
           title="Add site"
         >
@@ -103,7 +103,7 @@ export default function SitesPanel() {
       </form>
 
       {loading ? (
-        <p className="text-gray-500">Loading…</p>
+        <p className="text-neutral-500">Loading…</p>
       ) : error ? (
         <p className="text-red-600">{error}</p>
       ) : sites.length === 0 ? (
@@ -121,7 +121,7 @@ export default function SitesPanel() {
 
 function EmptyState() {
   return (
-    <div className="rounded-md border border-dashed p-6 text-center text-gray-600 dark:border-gray-700 dark:text-gray-400">
+    <div className="rounded-md border border-dashed p-6 text-center text-neutral-600 dark:border-neutral-700 dark:text-neutral-400">
       No sites yet. Add your domain above to get your site ID and integration instructions.
     </div>
   );
@@ -129,7 +129,31 @@ function EmptyState() {
 
 function SiteCard({ site, onRemove }: { site: Site, onRemove: (id: string) => void }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const scriptSnippet = `<script defer src=\"${origin}/tracker.js\" data-site-id=\"${site.site_id}\"></script>`;
+  const scriptSnippetLink = `<script defer src="${origin}/tracker.js" data-site-id="${site.site_id}"></script>`;
+  
+  // Inline script option - fetch tracker.js content
+  const [inlineScript, setInlineScript] = useState<string>('');
+  
+  useEffect(() => {
+    // Fetch the tracker.js content for inline option
+    fetch(`${origin}/tracker.js`)
+      .then(res => res.text())
+      .then(content => {
+        const inlineScriptContent = `<script>
+${content}
+
+// Initialize tracker
+MinilyticsTracker.init({
+  endpoint: '${origin}/api/track',
+  siteId: '${site.site_id}'
+});
+</script>`;
+        setInlineScript(inlineScriptContent);
+      })
+      .catch(() => {
+        setInlineScript('// Failed to load tracker script');
+      });
+  }, [origin, site.site_id]);
 
   const npmInstall = `npm install @fernando546/tracker@beta`;
   const npmSnippet = `import { MinilyticsTracker } from '@fernando546/tracker';
@@ -234,11 +258,11 @@ VITE_MINILY_SITE_ID=${site.site_id}`;
       <div className="mb-2 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{site.domain}</h3>
-          <p className="text-sm text-gray-500">Site ID: <code>{site.site_id}</code></p>
+          <p className="text-sm text-neutral-500">Site ID: <code>{site.site_id}</code></p>
         </div>
         <button
           type="button"
-          className="ml-4 flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white/80 text-red-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 hover:ring-2 hover:ring-red-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+          className="ml-4 flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white/80 text-red-600 transition-all hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 hover:ring-2 hover:ring-red-200 hover:shadow disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
           disabled={removing}
           onClick={handleRemove}
           aria-label="Remove site"
@@ -253,7 +277,10 @@ VITE_MINILY_SITE_ID=${site.site_id}`;
           <CodeBlock
             language="html"
             filename="index.html"
-            code={scriptSnippet}
+            tabs={[
+              { name: 'With CDN Link', code: scriptSnippetLink, language: 'html', highlightLines: [1] },
+              { name: 'Inline Script', code: inlineScript || '// Loading...', language: 'html' }
+            ]}
           />
         </div>
         <div>
