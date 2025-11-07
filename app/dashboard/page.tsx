@@ -4,6 +4,13 @@ import { useState, useEffect } from "react"
 import { getSupabaseClient } from "@/lib/supabaseClient"
 import ChartAreaInteractive from "@/components/analytics/ChartAreaInteractive"
 import { BarChart3, TrendingUp, Eye, Globe } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type Site = {
   id: string
@@ -32,6 +39,7 @@ export default function DashboardPage() {
   const [pageViews, setPageViews] = useState<PageView[]>([])
   const [loading, setLoading] = useState(true)
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([])
+  const [timeRange, setTimeRange] = useState<string>("7d")
 
   useEffect(() => {
     fetchSites()
@@ -40,6 +48,13 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAnalytics()
   }, [selectedSite])
+
+  useEffect(() => {
+    // Recalculate stats when time range changes
+    if (pageViews.length > 0) {
+      calculateDailyStats(pageViews)
+    }
+  }, [timeRange])
 
   const fetchSites = async () => {
     const supabase = getSupabaseClient()
@@ -88,13 +103,19 @@ export default function DashboardPage() {
 
   const calculateDailyStats = (views: PageView[]) => {
     const stats: { [key: string]: number } = {}
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    
+    // Calculate days based on time range
+    let days = 7
+    if (timeRange === "30d") days = 30
+    if (timeRange === "90d") days = 90
+    
+    const daysArray = Array.from({ length: days }, (_, i) => {
       const date = new Date()
       date.setDate(date.getDate() - i)
       return date.toISOString().split('T')[0]
     }).reverse()
 
-    last7Days.forEach(date => {
+    daysArray.forEach(date => {
       stats[date] = 0
     })
 
@@ -120,6 +141,10 @@ export default function DashboardPage() {
     const viewDate = new Date(v.created_at).toISOString().split('T')[0]
     return today === viewDate
   }).length
+  
+  // Calculate average based on time range
+  const daysInRange = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90
+  const avgPerDay = daysInRange > 0 ? Math.round(totalViews / daysInRange) : 0
 
   return (
     <div className="p-8">
@@ -131,18 +156,19 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <select
-          value={selectedSite}
-          onChange={(e) => setSelectedSite(e.target.value)}
-          className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-        >
-          <option value="all">All Sites</option>
-          {sites.map((site) => (
-            <option key={site.site_id} value={site.site_id}>
-              {site.domain}
-            </option>
-          ))}
-        </select>
+        <Select value={selectedSite} onValueChange={setSelectedSite}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select a site" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sites</SelectItem>
+            {sites.map((site) => (
+              <SelectItem key={site.site_id} value={site.site_id}>
+                {site.domain}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Stats Cards */}
@@ -168,16 +194,29 @@ export default function DashboardPage() {
         <StatCard
           icon={<BarChart3 className="h-6 w-6" />}
           title="Avg/Day"
-          value={Math.round(totalViews / 7).toLocaleString()}
+          value={avgPerDay.toLocaleString()}
           color="orange"
         />
       </div>
 
       {/* Chart */}
       <div className="mb-8 rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-        <h2 className="mb-6 text-xl font-semibold text-neutral-900 dark:text-white">
-          Last 7 Days
-        </h2>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            {timeRange === "7d" ? "Last 7 Days" : timeRange === "30d" ? "Last 30 Days" : "Last 3 Months"}
+          </h2>
+          
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 3 months</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {loading ? (
           <div className="flex h-64 items-center justify-center">
